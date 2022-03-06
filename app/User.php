@@ -36,6 +36,11 @@ class User
         }
 
         $this->user = json_decode(file_get_contents($filename));
+
+        if (!property_exists($this->user, 'data'))
+            $this->user->data = [];
+
+        $this->user->data = (array) $this->user->data;
     }
 
     private function filename()
@@ -49,7 +54,27 @@ class User
             'id' => $this->from->id,
             'firstName' => $this->from->first_name,
             'state' => 'default',
+            'data' => [],
         ];
+    }
+
+    public function setData($key, $val)
+    {
+        $this->user->data[$key] = $val;
+    }
+
+    public function deleteData($key)
+    {
+        if (array_key_exists($key, $this->user->data))
+            unset($this->user->data[$key]);
+    }
+
+    public function getData($key)
+    {
+        if (array_key_exists($key, $this->user->data))
+            return $this->user->data[$key];
+
+        return null;
     }
 
     public function setState($state)

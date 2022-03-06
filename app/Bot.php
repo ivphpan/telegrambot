@@ -29,22 +29,26 @@ class Bot
                     $message = new Message($update);
                 }
 
-                $this->editMessageText($message->chatId(), $message->id(), 'Подождите, идёт загрузка...');
-                $this->deleteMessage($message->chatId(), $message->id());
-
                 $user = new User($message->from());
                 $answer = new Answer($this, $message->chatId());
 
+                if ($message instanceof Message && ($previousMessageId = $user->getData('messageId'))) {
+                    $this->deleteMessage($message->chatId(), $previousMessageId);
+                }
+
                 if ($message instanceof CallbackQueryMessage) {
                     $this->answerCallbackQuery($update->callback_query->id);
+                    $this->editMessageText($message->chatId(), $message->id(), 'Подождите, идёт загрузка...');
                 }
+
+                $this->deleteMessage($message->chatId(), $message->id());
 
                 $offset = $message->nextId();
                 $cb($user, $message->text(), $answer);
 
                 if ($answer->isReady()) {
                     $sendResponse = $answer->send();
-                    print_r($sendResponse);
+                    $user->setData('messageId', $sendResponse->message_id);
                 }
 
                 $user->save();
