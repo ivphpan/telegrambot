@@ -2,6 +2,8 @@
 
 namespace App;
 
+use Grpc\Call;
+
 class Bot
 {
     private $key;
@@ -20,15 +22,25 @@ class Bot
             if (!$updates) continue;
 
             foreach ($updates as $update) {
-                $message = new Message($update);
-                $user = new User($update);
-                $answer = new Answer($this, $message);
+                print_r($update);
+                if (property_exists($update, 'callback_query')) {
+                    $message = new CallbackQueryMessage($update);
+                } else {
+                    $message = new Message($update);
+                }
+                $user = new User($message->from());
+                $answer = new Answer($this, $message->chatId());
+
+                if ($message instanceof CallbackQueryMessage) {
+                    $this->answerCallbackQuery($update->callback_query->id);
+                }
 
                 $offset = $message->nextId();
                 $cb($user, $message->text(), $answer);
 
                 if ($answer->isReady()) {
-                    $answer->send();
+                    $sendResponse = $answer->send();
+                    print_r($sendResponse);
                 }
 
                 $user->save();
@@ -37,11 +49,18 @@ class Bot
         }
     }
 
+    private function answerCallbackQuery($id)
+    {
+        $this->callApi('answerCallbackQuery', [
+            'callback_query_id'=>$id,
+        ]);
+    }
+
     public function getUpdates($offset = 0)
     {
         return $this->callApi('getUpdates', [
             'offset' => $offset,
-            'allowed_updates' => json_encode(['message']),
+            'allowed_updates' => json_encode(['message', 'callback_query']),
         ]);
     }
 

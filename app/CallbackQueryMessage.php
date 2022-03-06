@@ -1,8 +1,8 @@
 <?php
 
-namespace App;
+namespace app;
 
-class Message
+class CallbackQueryMessage
 {
     private $data;
 
@@ -13,12 +13,12 @@ class Message
 
     public function chatId()
     {
-        return $this->data->message->chat->id;
+        return $this->data->callback_query->message->chat->id;
     }
 
     public function from()
     {
-        return $this->data->message->from;
+        return $this->data->callback_query->from;
     }
 
     public function nextId()
@@ -28,6 +28,7 @@ class Message
 
     public function text()
     {
-        return property_exists($this->data->message, 'text') ? $this->data->message->text : '';
+        return $this->data->callback_query->data;
     }
+
 }

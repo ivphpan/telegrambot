@@ -4,14 +4,14 @@ namespace App;
 
 class User
 {
-    private $data;
+    private $from;
     private $user;
 
     const DataPath = './user';
 
-    public function __construct($data)
+    public function __construct($from)
     {
-        $this->data = $data;
+        $this->from = $from;
         $this->loadFromFile();
     }
 
@@ -40,15 +40,14 @@ class User
 
     private function filename()
     {
-        return self::DataPath . '/' . $this->data->message->from->id . '.json';
+        return self::DataPath . '/' . $this->from->id . '.json';
     }
 
     private function create()
     {
-        $from = $this->data->message->from;
         return (object)[
-            'id' => $from->id,
-            'firstName' => $from->first_name,
+            'id' => $this->from->id,
+            'firstName' => $this->from->first_name,
             'state' => 'default',
         ];
     }

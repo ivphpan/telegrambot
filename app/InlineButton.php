@@ -23,6 +23,6 @@ class InlineButton
 
     public function isPress($text)
     {
-        return preg_match('#'.$this->text.'#', $text);
+        return preg_match('#'.$this->data.'#', $text);
     }
 }
