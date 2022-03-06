@@ -2,8 +2,6 @@
 
 namespace App;
 
-use Grpc\Call;
-
 class Bot
 {
     private $key;
@@ -41,8 +39,6 @@ class Bot
                     $this->editMessageText($message->chatId(), $message->id(), 'Подождите, идёт загрузка...');
                 }
 
-                $this->deleteMessage($message->chatId(), $message->id());
-
                 $offset = $message->nextId();
                 $cb($user, $message->text(), $answer);
 
@@ -50,6 +46,8 @@ class Bot
                     $sendResponse = $answer->send();
                     $user->setData('messageId', $sendResponse->message_id);
                 }
+
+                $this->deleteMessage($message->chatId(), $message->id());
 
                 $user->save();
             }
@@ -115,7 +113,7 @@ class Bot
         $curl = curl_init($url);
         curl_setopt_array($curl, [
             CURLOPT_RETURNTRANSFER => 1,
-            CURLOPT_TIMEOUT => 5,
+            CURLOPT_TIMEOUT => 30,
         ]);
 
         if (!empty($params)) {

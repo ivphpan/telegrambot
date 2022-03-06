@@ -82,6 +82,11 @@ class User
         $this->user->state = $state;
     }
 
+    public function isState($state)
+    {
+        return $this->user->state == $state;
+    }
+
     public function state()
     {
         return $this->user->state;

@@ -56,65 +56,112 @@ $telegramBot = new Bot();
 $telegramBot->setKey(TelegramApiKey);
 
 //Бот при получении сообщения, проверяет по условию и заполняет ответ
-$telegramBot->onGetMessages(function ($user, $text, Answer $answer) {
-    $startBtn = new Button('/start'); //Создаем кнопочку /start
-    $inlineBtn = new Button('/inline-keyboard');
-    $dateBtn = new Button('/date');//Создаем кнопочку /date
-    $userBtn = new Button('/user');//Создаем кнопочку /user
-    $userChangeStateBtn = new Button('/user-change-state');//Создаем кнопочку /user-change-state
+$telegramBot->onGetMessages(function (User $user, $text, Answer $answer) {
+    $task = new Task($user->id());
 
-    $inlineBtn01 = new InlineButton('Кнопка 01', 'button-1');
-    $inlineBtn02 = new InlineButton('Кнопка 02', 'button-2');
-    $inlineBtn03 = new InlineButton('Кнопка 03', 'button-3');
+    $startBtn = new Button('/start');
+    $pendingBtn = new InlineButton('Невыполненные (' . $task->pendingCount() . ')', 'pending');
+    $doneBtn = new InlineButton('Выполненные ('.$task->doneCount().')', 'completed');
+    $addBtn = new InlineButton('Добавить задачу', 'add');
+    $cancelBtn = new InlineButton('Отменить', 'cancel');
+    $mainBtn = new InlineButton('На главную', 'main');
+    $cleanBtn = new InlineButton('Очистить', 'clean');
 
-    if ($inlineBtn01->isPress($text)) {
+    if ($startBtn->isPress($text) || $mainBtn->isPress($text)) {
+        $user->setState('default');
+        $answer->setText('Я ваш личный помощник по задачам');
         $keyboard = new InlineKeyboard();
-        $keyboard->button(1, $inlineBtn01);
-        $keyboard->button(2, $inlineBtn02);
-        $keyboard->button(3, $inlineBtn03);
-        $answer->setText('Вы нажали на кнопку01 встроенной клавиатуры');
+        $keyboard->button(1, $pendingBtn);
+        $keyboard->button(2, $doneBtn);
+        $keyboard->button(3, $addBtn);
         $answer->setKeyboard($keyboard);
     }
 
-    if ($inlineBtn02->isPress($text)) {
-        $answer->setText('Вы нажали на кнопку02 встроенной клавиатуры');
-    }
+    if ($user->isState('taskAdd')) {
 
-    if ($inlineBtn->isPress($text)) {
+        if ($cancelBtn->isPress($text)) {
+            $answer->setText('Вы отменили добавление задачи');
+            $user->setState('default');
+            $keyboard = new InlineKeyboard();
+            $keyboard->button(1, $pendingBtn);
+            $keyboard->button(2, $doneBtn);
+            $keyboard->button(3, $addBtn);
+            $answer->setKeyboard($keyboard);
+            return;
+        }
+
+        $task->create($text);
+
+        $answer->setText('Список невыполненных задач');
+        $user->setState('pendingList');
         $keyboard = new InlineKeyboard();
-        $keyboard->button(1, $inlineBtn01);
-        $keyboard->button(2, $inlineBtn02);
-        $keyboard->button(3, $inlineBtn03);
-        $answer->setText('Встроенная клавиатура');
+        foreach ($task->pendingList() as $i => $task) {
+            $keyboard->button($i, new InlineButton($task->name, $task->id));
+        }
+        $keyboard->button(98, $addBtn);
+        $keyboard->button(99, $mainBtn);
+        $answer->setKeyboard($keyboard);
+        return;
+    }
+
+    if ($addBtn->isPress($text)) {
+        $user->setState('taskAdd');
+        $answer->setText('Введите название задачи');
+        $keyboard = new InlineKeyboard();
+        $keyboard->button(1, $cancelBtn);
         $answer->setKeyboard($keyboard);
     }
 
-    if ($dateBtn->isPress($text)) { // Если нажали на кнопочку /date
-        $answer->setText(date('d.m.Y')); //заполняем ответ текущей датой
-    }
-
-    if ($userBtn->isPress($text)) {
-        $answer->setText(json_encode([
-            'id' => $user->id(),
-            'firstName' => $user->firstName(),
-            'state' => $user->state(),
-        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-    }
-
-    if ($userChangeStateBtn->isPress($text)) {
-        $user->setState('customState '.mt_rand(1, 1000));
-        $answer->setText('Состояние изменено');
-    }
-
-    if ($startBtn->isPress($text)) {
-        $keyboard = new Keyboard();
-        $keyboard->button(0, $inlineBtn);
-        $keyboard->button(1, $startBtn);
-        $keyboard->button(2, $dateBtn);
-        $keyboard->button(3, $userBtn);
-        $keyboard->button(3, $userChangeStateBtn);
-
-        $answer->setText('Вот тебе кнопочки');
+    if ($user->isState('pendingList')) {
+        $task->done($text);
+        $answer->setText('Задача перемещена в выполненные, осталось (' . $task
+                ->pendingCount() . ')');
+        $keyboard = new InlineKeyboard();
+        foreach ($task->pendingList() as $i => $task) {
+            $keyboard->button($i, new InlineButton($task->name, $task->id));
+        }
+        $keyboard->button(98, $addBtn);
+        $keyboard->button(99, $mainBtn);
         $answer->setKeyboard($keyboard);
+        return;
+    }
+
+    if ($pendingBtn->isPress($text)) {
+        $answer->setText('Список невыполненных задач (' . $task->pendingCount() . ')');
+        $user->setState('pendingList');
+
+        $keyboard = new InlineKeyboard();
+        foreach ($task->pendingList() as $i => $task) {
+            $keyboard->button($i, new InlineButton($task->name, $task->id));
+        }
+        $keyboard->button(98, $addBtn);
+        $keyboard->button(99, $mainBtn);
+        $answer->setKeyboard($keyboard);
+        return;
+    }
+
+    if ($user->isState('doneList') && $cleanBtn->isPress($text)) {
+        $task->doneRemove();
+        $keyboard = new InlineKeyboard();
+        $keyboard->button(1, new InlineButton('Невыполненные ('.$task->pendingCount().')', 'pendingList'));
+        $keyboard->button(2, new InlineButton('Выполненные ('.$task->doneCount().')', 'doneList'));
+        $keyboard->button(3, $addBtn);
+        $answer->setText('Список выполненных задача успешно очищен');
+        $answer->setKeyboard($keyboard);
+        return;
+    }
+
+    if ($doneBtn->isPress($text) || $user->isState('doneList')) {
+        $answer->setText('Список выполненных задач ('.$task->doneCount().')');
+        $user->setState('doneList');
+
+        $keyboard = new InlineKeyboard();
+        foreach ($task->doneList() as $i => $task) {
+            $keyboard->button($i, new InlineButton($task->name, $task->id));
+        }
+        $keyboard->button(98, $cleanBtn);
+        $keyboard->button(99, $mainBtn);
+        $answer->setKeyboard($keyboard);
+        return;
     }
 });
