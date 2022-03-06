@@ -28,6 +28,10 @@ class Bot
                 } else {
                     $message = new Message($update);
                 }
+
+                $this->editMessageText($message->chatId(), $message->id(), 'Подождите, идёт загрузка...');
+                $this->deleteMessage($message->chatId(), $message->id());
+
                 $user = new User($message->from());
                 $answer = new Answer($this, $message->chatId());
 
@@ -52,7 +56,7 @@ class Bot
     private function answerCallbackQuery($id)
     {
         $this->callApi('answerCallbackQuery', [
-            'callback_query_id'=>$id,
+            'callback_query_id' => $id,
         ]);
     }
 
@@ -61,6 +65,14 @@ class Bot
         return $this->callApi('getUpdates', [
             'offset' => $offset,
             'allowed_updates' => json_encode(['message', 'callback_query']),
+        ]);
+    }
+
+    private function deleteMessage($chatId, $messageId)
+    {
+        return $this->callApi('deleteMessage', [
+            'chat_id' => $chatId,
+            'message_id' => $messageId
         ]);
     }
 
@@ -73,6 +85,21 @@ class Bot
 
         return $this->callApi('sendMessage', [
             'chat_id' => $chatId,
+            'text' => $text,
+            'reply_markup' => $reply_markup,
+        ]);
+    }
+
+    public function editMessageText($chatId, $messageId, $text, $keyboard = null)
+    {
+        $reply_markup = '';
+        if ($keyboard != null) {
+            $reply_markup = $keyboard->get();
+        }
+
+        return $this->callApi('editMessageText', [
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
             'text' => $text,
             'reply_markup' => $reply_markup,
         ]);

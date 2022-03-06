@@ -11,6 +11,11 @@ class CallbackQueryMessage
         $this->data = $data;
     }
 
+    public function id()
+    {
+        return $this->data->callback_query->message->message_id;
+    }
+
     public function chatId()
     {
         return $this->data->callback_query->message->chat->id;

@@ -68,7 +68,16 @@ $telegramBot->onGetMessages(function ($user, $text, Answer $answer) {
     $inlineBtn03 = new InlineButton('Кнопка 03', 'button-3');
 
     if ($inlineBtn01->isPress($text)) {
+        $keyboard = new InlineKeyboard();
+        $keyboard->button(1, $inlineBtn01);
+        $keyboard->button(2, $inlineBtn02);
+        $keyboard->button(3, $inlineBtn03);
         $answer->setText('Вы нажали на кнопку01 встроенной клавиатуры');
+        $answer->setKeyboard($keyboard);
+    }
+
+    if ($inlineBtn02->isPress($text)) {
+        $answer->setText('Вы нажали на кнопку02 встроенной клавиатуры');
     }
 
     if ($inlineBtn->isPress($text)) {

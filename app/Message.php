@@ -11,6 +11,11 @@ class Message
         $this->data = $data;
     }
 
+    public function id()
+    {
+        return $this->data->message->message_id;
+    }
+
     public function chatId()
     {
         return $this->data->message->chat->id;
