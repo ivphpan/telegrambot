@@ -33,6 +33,7 @@ class Bot
 
                 $user->save();
             }
+            usleep(500000);
         }
     }
 
@@ -40,7 +41,7 @@ class Bot
     {
         return $this->callApi('getUpdates', [
             'offset' => $offset,
-            'allowed_updates' => 'message',
+            'allowed_updates' => json_encode(['message']),
         ]);
     }
 
@@ -49,7 +50,6 @@ class Bot
         $reply_markup = '';
         if ($keyboard != null) {
             $reply_markup = $keyboard->get();
-            var_dump($reply_markup);
         }
 
         return $this->callApi('sendMessage', [

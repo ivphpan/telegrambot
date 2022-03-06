@@ -8,7 +8,6 @@ class Message
 
     public function __construct($data)
     {
-        print_r($data);
         $this->data = $data;
     }
 

@@ -58,9 +58,19 @@ $telegramBot->setKey(TelegramApiKey);
 //Бот при получении сообщения, проверяет по условию и заполняет ответ
 $telegramBot->onGetMessages(function ($user, $text, Answer $answer) {
     $startBtn = new Button('/start'); //Создаем кнопочку /start
+    $inlineBtn = new Button('/inline-keyboard');
     $dateBtn = new Button('/date');//Создаем кнопочку /date
     $userBtn = new Button('/user');//Создаем кнопочку /user
     $userChangeStateBtn = new Button('/user-change-state');//Создаем кнопочку /user-change-state
+
+    if ($inlineBtn->isPress($text)) {
+        $keyboard = new InlineKeyboard();
+        $keyboard->button(1, new InlineButton('Кнопка 01', 'button-1'));
+        $keyboard->button(2, new InlineButton('Кнопка 02', 'button-2'));
+        $keyboard->button(3, new InlineButton('Кнопка 03', 'button-3'));
+        $answer->setText('Встроенная клавиатура');
+        $answer->setKeyboard($keyboard);
+    }
 
     if ($dateBtn->isPress($text)) { // Если нажали на кнопочку /date
         $answer->setText(date('d.m.Y')); //заполняем ответ текущей датой
@@ -81,10 +91,11 @@ $telegramBot->onGetMessages(function ($user, $text, Answer $answer) {
 
     if ($startBtn->isPress($text)) {
         $keyboard = new Keyboard();
-        $keyboard->button(3, $userBtn);
-        $keyboard->button(3, $userChangeStateBtn);
+        $keyboard->button(0, $inlineBtn);
         $keyboard->button(1, $startBtn);
         $keyboard->button(2, $dateBtn);
+        $keyboard->button(3, $userBtn);
+        $keyboard->button(3, $userChangeStateBtn);
 
         $answer->setText('Вот тебе кнопочки');
         $answer->setKeyboard($keyboard);
